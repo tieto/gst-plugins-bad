@@ -780,19 +780,6 @@ _ensure_gl_setup (GstGLImageSink * gl_sink)
 
       GST_DEBUG_OBJECT (gl_sink, "got window %" GST_PTR_FORMAT, window);
 
-      if (!gl_sink->window_id && !gl_sink->new_window_id)
-        gst_video_overlay_prepare_window_handle (GST_VIDEO_OVERLAY (gl_sink));
-
-      GST_DEBUG_OBJECT (gl_sink,
-          "window_id : %" G_GUINTPTR_FORMAT " , new_window_id : %"
-          G_GUINTPTR_FORMAT, gl_sink->window_id, gl_sink->new_window_id);
-
-      if (gl_sink->window_id != gl_sink->new_window_id) {
-        gl_sink->window_id = gl_sink->new_window_id;
-        GST_DEBUG_OBJECT (gl_sink, "Setting window handle on gl window");
-        gst_gl_window_set_window_handle (window, gl_sink->window_id);
-      }
-
       gst_gl_window_handle_events (window, gl_sink->handle_events);
 
       /* setup callbacks */
@@ -824,6 +811,23 @@ _ensure_gl_setup (GstGLImageSink * gl_sink)
     GST_OBJECT_UNLOCK (gl_sink->display);
   } else
     GST_TRACE_OBJECT (gl_sink, "Already have a context");
+
+  if (!gl_sink->window_id && !gl_sink->new_window_id)
+    gst_video_overlay_prepare_window_handle (GST_VIDEO_OVERLAY (gl_sink));
+
+  GST_DEBUG_OBJECT (gl_sink,
+      "window_id : %" G_GUINTPTR_FORMAT " , new_window_id : %"
+      G_GUINTPTR_FORMAT, gl_sink->window_id, gl_sink->new_window_id);
+
+  if (gl_sink->window_id != gl_sink->new_window_id) {
+    GstGLWindow *window = NULL;
+
+    gl_sink->window_id = gl_sink->new_window_id;
+    GST_DEBUG_OBJECT (gl_sink, "Setting window handle on gl window");
+    window = gst_gl_context_get_window (gl_sink->context);
+    gst_gl_window_set_window_handle (window, gl_sink->window_id);
+    gst_object_unref (window);
+  }
 
   return TRUE;
 
